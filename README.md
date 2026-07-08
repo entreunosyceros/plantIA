@@ -1,5 +1,7 @@
 # PlantIA
 
+<img width="1200" height="655" alt="PlantIA" src="https://github.com/user-attachments/assets/cc8c9c52-1a06-4704-818b-60c9afd33cec" />
+
 Aplicación web para identificar plantas a partir de fotografías usando **Google Gemini**. Guarda cada identificación en una base de datos local SQLite para consultarla después.
 
 PlantIA crea un pequeño cuaderno digital de tus plantas. Identifica cada ejemplar mediante IA, almacena sus fotografías y reúne en un solo lugar la información necesaria para cuidarlo.

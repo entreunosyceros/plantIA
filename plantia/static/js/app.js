@@ -125,12 +125,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? `<img class="candidate-thumb" src="${img}" alt="${sci}">`
                     : `<div class="candidate-thumb candidate-thumb-placeholder" aria-hidden="true">🌿</div>`;
 
+                // Wikipedia en inglés. Usamos el nombre científico como título del artículo.
+                const wikiUrl = sci
+                    ? `https://en.wikipedia.org/wiki/${encodeURIComponent(
+                          sci.trim().replace(/\s+/g, "_")
+                      )}`
+                    : "";
+                const wikiLinkOpen = wikiUrl
+                    ? `<a class="candidate-wiki-link" href="${wikiUrl}" target="_blank" rel="noreferrer noopener">`
+                    : "";
+                const wikiLinkClose = wikiUrl ? `</a>` : "";
+
                 return `
                 <div class="candidate-card">
                     ${imgTag}
                     <div class="candidate-body">
-                        <div class="candidate-title">${name}</div>
-                        ${sci ? `<div class="candidate-sci"><em>${sci}</em></div>` : ""}
+                        <div class="candidate-title">
+                            ${wikiLinkOpen}${name}${wikiLinkClose}
+                        </div>
+                        ${sci ? `<div class="candidate-sci"><em>${wikiLinkOpen}${sci}${wikiLinkClose}</em></div>` : ""}
                         <div class="candidate-meta">
                             <span class="badge badge-${conf}">${conf}</span>
                         </div>

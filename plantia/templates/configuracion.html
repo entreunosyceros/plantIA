@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración — PlantIA{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Configuración</h1>
+    <p>Configura tu clave y el modelo de Gemini para identificar plantas.</p>
+</section>
+
+{% if mensaje %}
+<div class="alert alert-success">{{ mensaje }}</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="upload-card">
+    <form action="/configuracion" method="post">
+        <label class="form-label" for="gemini_api_key">API Key de Gemini</label>
+        <input
+            class="form-input"
+            type="password"
+            id="gemini_api_key"
+            name="gemini_api_key"
+            autocomplete="off"
+            placeholder="{% if has_key %}Dejar vacío para mantener la clave actual{% else %}Pega aquí tu clave...{% endif %}"
+        >
+        <p class="hint">
+            Obtén tu clave en
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+            Se guarda en <code>~/.plantia/config.json</code> con permisos restringidos.
+        </p>
+
+        <label class="form-label" for="gemini_model">Modelo de Gemini</label>
+        <select class="form-input" id="gemini_model" name="gemini_model" required>
+            {% for model_id, model_label in available_models %}
+            <option value="{{ model_id }}"{% if model_id == gemini_model %} selected{% endif %}>
+                {{ model_label }}
+            </option>
+            {% endfor %}
+        </select>
+        <p class="hint">
+            Usa <strong>Gemini 2.5 Flash</strong> si no estás seguro.
+            Los modelos 2.0 ya no están disponibles.
+        </p>
+
+        <button type="submit" class="btn btn-primary">Guardar configuración</button>
+    </form>
+</div>
+{% endblock %}

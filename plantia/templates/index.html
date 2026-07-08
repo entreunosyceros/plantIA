@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Identificar planta — PlantIA{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Identifica tu planta</h1>
+    <p class="subtitle">Sube una fotografía y Gemini te dirá qué planta es y cómo cuidarla.</p>
+</section>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+{% if mensaje %}
+<div class="alert alert-success">{{ mensaje }}</div>
+{% endif %}
+
+<div class="upload-card">
+    <form id="upload-form" action="/identificar" method="post" enctype="multipart/form-data">
+        <div id="drop-zone" class="drop-zone">
+            <input type="file" id="file-input" name="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <div class="drop-zone-content">
+                <span class="drop-icon">📷</span>
+                <p>Arrastra una foto aquí o <button type="button" id="browse-btn" class="link-btn">selecciona un archivo</button></p>
+                <p class="hint">JPEG, PNG o WebP — máximo 10 MB</p>
+            </div>
+            <img id="preview" class="preview hidden" alt="Vista previa">
+        </div>
+        <button type="submit" id="submit-btn" class="btn btn-primary" disabled>Identificar planta</button>
+    </form>
+</div>
+
+{% if planta %}
+<section class="result-card">
+    <div class="result-header">
+        <h2>{{ planta.nombre_comun }}</h2>
+        <span class="badge badge-{{ planta.confianza }}">Confianza: {{ planta.confianza }}</span>
+    </div>
+
+    <p class="result-continuity">
+        Gemini ha identificado tu planta. <strong>Ahora empieza tu cuaderno</strong>: registra lo que vaya pasando con ella.
+    </p>
+
+    {% with origen='index', compact=true %}
+    {% include "partials/cuaderno_planta.html" %}
+    {% endwith %}
+
+    <div class="result-grid">
+        <div class="result-image">
+            <img src="{{ image_url(planta.image_path) }}" alt="{{ planta.nombre_comun }}">
+        </div>
+        <div class="result-info">
+            <dl>
+                <dt>Nombre científico</dt>
+                <dd><em>{{ planta.nombre_cientifico or '—' }}</em></dd>
+                <dt>Familia</dt>
+                <dd>{{ planta.familia or '—' }}</dd>
+                <dt>Tipo</dt>
+                <dd>{{ planta.tipo or '—' }}</dd>
+            </dl>
+            <p class="description">{{ planta.descripcion }}</p>
+        </div>
+    </div>
+
+    <h3>Cuidados</h3>
+    <div class="care-grid">
+        <div class="care-item">
+            <span class="care-icon">💧</span>
+            <h4>Riego</h4>
+            <p>{{ planta.riego or '—' }}</p>
+        </div>
+        <div class="care-item">
+            <span class="care-icon">☀️</span>
+            <h4>Luz</h4>
+            <p>{{ planta.luz or '—' }}</p>
+        </div>
+        <div class="care-item">
+            <span class="care-icon">🌡️</span>
+            <h4>Temperatura</h4>
+            <p>{{ planta.temperatura or '—' }}</p>
+        </div>
+        <div class="care-item">
+            <span class="care-icon">💨</span>
+            <h4>Humedad</h4>
+            <p>{{ planta.humedad or '—' }}</p>
+        </div>
+        <div class="care-item">
+            <span class="care-icon">🪴</span>
+            <h4>Suelo</h4>
+            <p>{{ planta.suelo or '—' }}</p>
+        </div>
+        <div class="care-item">
+            <span class="care-icon">🧪</span>
+            <h4>Fertilización</h4>
+            <p>{{ planta.fertilizacion or '—' }}</p>
+        </div>
+    </div>
+
+    {% if planta.problemas_comunes %}
+    <div class="problems">
+        <h4>Problemas comunes</h4>
+        <p>{{ planta.problemas_comunes }}</p>
+    </div>
+    {% endif %}
+
+    {% if planta.dificultad or planta.toxicidad_perros or planta.toxicidad_gatos %}
+    <div class="result-highlights">
+        {% if planta.dificultad %}
+        <span class="highlight-chip">Dificultad: {{ planta.dificultad }}</span>
+        {% endif %}
+        {% if planta.toxicidad_perros %}
+        <span class="highlight-chip">🐕 {{ planta.toxicidad_perros[:60] }}{% if planta.toxicidad_perros|length > 60 %}…{% endif %}</span>
+        {% endif %}
+        {% if planta.toxicidad_gatos %}
+        <span class="highlight-chip">🐈 {{ planta.toxicidad_gatos[:60] }}{% if planta.toxicidad_gatos|length > 60 %}…{% endif %}</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="result-actions">
+        <a href="/plantas/{{ planta.id }}" class="btn btn-secondary">Ver ficha completa</a>
+        <a href="/" class="btn btn-outline">Identificar otra</a>
+    </div>
+
+    {% if planta.candidatos_json and planta.candidatos_json != '[]' %}
+    <section class="candidate-section">
+        <h3>Posibles candidatos</h3>
+        <p class="hint">Si la identificación no es perfecta, estos candidatos pueden ayudarte a comparar.</p>
+        {% set candidatos = planta.candidatos_json | tojson %}
+        {# Nota: Jinja no parsea JSON nativo sin filtro; lo mostramos desde backend en ficha completa. #}
+        <p class="hint">Abre “Ver ficha completa” para ver los candidatos en tarjetas con imagen.</p>
+    </section>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

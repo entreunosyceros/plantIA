@@ -1,0 +1,75 @@
+{# Cuaderno de observaciones — reutilizable en ficha y tras identificar #}
+<section
+    id="cuaderno-planta"
+    class="journal-section{% if compact %} journal-section--compact{% endif %}"
+    aria-labelledby="journal-heading-{{ planta.id }}"
+    {% if focus_cuaderno %}data-focus-cuaderno="1"{% endif %}
+>
+    <div class="journal-header">
+        <div class="journal-header-text">
+            <h2 id="journal-heading-{{ planta.id }}">📓 Cuaderno de la planta</h2>
+            <p class="journal-lead">
+                La identificación es solo el punto de partida. Añade tus propias observaciones:
+                cuándo la regaste, si floreció, cuándo la trasplantaste o cambiaste el sustrato.
+            </p>
+        </div>
+        {% if planta.notas_usuario and planta.notas_usuario.strip() %}
+        <span class="journal-badge">Con anotaciones</span>
+        {% endif %}
+    </div>
+
+    {% if planta.notas_usuario and planta.notas_usuario.strip() %}
+    <div class="journal-entries" aria-label="Anotaciones guardadas">
+        <ul class="journal-entry-list">
+            {% for linea in planta.notas_usuario.strip().split('\n') %}
+            {% if linea.strip() %}
+            <li>
+                <span class="journal-check" aria-hidden="true">✔</span>
+                <span>{{ linea.strip() }}</span>
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="journal-empty">
+        <p class="journal-empty-title">Empieza tu cuaderno con la primera anotación</p>
+        <ul class="journal-examples" aria-hidden="true">
+            <li><span class="journal-check">✔</span> Regada el 4 de julio</li>
+            <li><span class="journal-check">✔</span> Abonada el 12 de junio</li>
+            <li><span class="journal-check">✔</span> Trasplantada el 20 de abril</li>
+            <li><span class="journal-check">✔</span> Floreció por primera vez</li>
+        </ul>
+    </div>
+    {% endif %}
+
+    <form class="journal-form" method="post" action="/plantas/{{ planta.id }}/notas">
+        <input type="hidden" name="redirect" value="{{ origen }}">
+
+        <fieldset class="journal-quick-add">
+            <legend>Añadir rápido</legend>
+            <div class="journal-chips" role="group" aria-label="Plantillas de anotación">
+                <button type="button" class="journal-chip" data-journal-template="Regada el {fecha}">💧 Regada</button>
+                <button type="button" class="journal-chip" data-journal-template="Abonada el {fecha}">🧪 Abonada</button>
+                <button type="button" class="journal-chip" data-journal-template="Trasplantada el {fecha}">🪴 Trasplantada</button>
+                <button type="button" class="journal-chip" data-journal-template="Podada el {fecha}">✂️ Podada</button>
+                <button type="button" class="journal-chip" data-journal-template="Floreció el {fecha}">🌸 Floreció</button>
+                <button type="button" class="journal-chip" data-journal-template="Cambié el sustrato el {fecha}">🌱 Nuevo sustrato</button>
+            </div>
+        </fieldset>
+
+        <label class="journal-label" for="notas-{{ planta.id }}">Tus observaciones</label>
+        <textarea
+            id="notas-{{ planta.id }}"
+            name="notas_usuario"
+            class="journal-textarea"
+            rows="5"
+            placeholder="Escribe una línea por anotación. Ejemplo:&#10;Regada el 4 de julio — hojas un poco mustias&#10;Trasplantada a maceta de 20 cm con sustrato para verdes"
+        >{{ planta.notas_usuario }}</textarea>
+
+        <div class="journal-form-actions">
+            <button type="submit" class="btn btn-primary">Guardar en el cuaderno</button>
+            <p class="hint journal-hint">Una línea por evento o observación. Puedes editar y ampliar cuando quieras.</p>
+        </div>
+    </form>
+</section>

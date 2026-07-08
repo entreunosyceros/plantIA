@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PlantIA{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        (function () {
+            try {
+                var shown = sessionStorage.getItem("plantiaSplashShown") === "1";
+                var shouldShow = !shown || window.location.pathname === "/";
+                if (shouldShow) {
+                    document.documentElement.classList.add("show-splash");
+                }
+            } catch (e) {
+                document.documentElement.classList.add("show-splash");
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div id="splash" class="splash" aria-hidden="true">
+        <div class="splash-inner">
+            <img class="splash-logo" src="/static/img/logo.png" alt="PlantIA">
+            <div class="splash-progress" role="progressbar" aria-label="Cargando" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="splash-progress-bar" class="splash-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+    <header class="header">
+        <div class="container header-inner">
+            <a href="/" class="logo">
+                <img class="logo-img" src="/static/img/logo.png" alt="PlantIA">
+                <span class="logo-text">PlantIA</span>
+            </a>
+            <nav>
+                <a href="/" class="nav-link{% if request.url.path == '/' %} active{% endif %}">Identificar</a>
+                <a href="/plantas" class="nav-link{% if request.url.path.startswith('/plantas') %} active{% endif %}">Mis plantas</a>
+                <a href="/configuracion" class="nav-link{% if request.url.path.startswith('/configuracion') %} active{% endif %}">Configuración</a>
+                <form method="post" action="/salir" style="margin: 0;">
+                    <button
+                        type="submit"
+                        class="btn btn-danger nav-exit"
+                        onclick="return confirm('¿Seguro que quieres salir? Se cerrará el servidor y se liberará el puerto.');"
+                    >Salir</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>PlantIA — identificación de plantas con Gemini. Los resultados son orientativos.</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}{{ planta.nombre_comun }} — PlantIA{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+    <div class="breadcrumb">
+        <a href="/plantas">← Mis plantas</a>
+    </div>
+
+    {% if mensaje %}
+    <div class="alert alert-success">{{ mensaje }}</div>
+    {% endif %}
+
+    <article class="detail-card">
+        <div class="detail-header">
+            <div>
+                <h1>{{ planta.nombre_comun }}</h1>
+                <p class="scientific"><em>{{ planta.nombre_cientifico }}</em></p>
+            </div>
+            <span class="badge badge-{{ planta.confianza }}">Confianza: {{ planta.confianza }}</span>
+        </div>
+
+        {% with origen='detalle', compact=false %}
+        {% include "partials/cuaderno_planta.html" %}
+        {% endwith %}
+
+        <div class="detail-layout">
+            <aside class="detail-sidebar">
+                <img src="{{ image_url(planta.image_path) }}" alt="{{ planta.nombre_comun }}" class="detail-sidebar-img">
+                <time class="detail-date">Identificada el {{ planta.created_at.strftime('%d/%m/%Y a las %H:%M') }}</time>
+
+                {% if luna %}
+                <div class="moon-card" aria-label="Calendario lunar">
+                    <div class="moon-top">
+                        <span class="moon-emoji" aria-hidden="true">{{ luna.emoji }}</span>
+                        <div class="moon-meta">
+                            <div class="moon-phase">{{ luna.phase_name }}</div>
+                            <div class="moon-date">{{ luna.date_iso }}</div>
+                        </div>
+                    </div>
+                    <div class="moon-bar" role="progressbar" aria-label="Iluminación lunar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ luna.illumination_pct }}">
+                        <div class="moon-bar-fill" style="width: {{ luna.illumination_pct }}%"></div>
+                    </div>
+                    <div class="moon-hint">{{ luna.illumination_pct }}% iluminada</div>
+                </div>
+                {% endif %}
+
+                <dl class="sidebar-facts">
+                    <dt>Familia</dt>
+                    <dd>{{ planta.familia or '—' }}</dd>
+                    <dt>Tipo</dt>
+                    <dd>{{ planta.tipo or '—' }}</dd>
+                    {% if planta.taxonomia_genero %}
+                    <dt>Género</dt>
+                    <dd><em>{{ planta.taxonomia_genero }}</em></dd>
+                    {% endif %}
+                    {% if planta.taxonomia_especie %}
+                    <dt>Especie</dt>
+                    <dd><em>{{ planta.taxonomia_especie }}</em></dd>
+                    {% endif %}
+                    {% if planta.dificultad %}
+                    <dt>Dificultad</dt>
+                    <dd class="capitalize">{{ planta.dificultad }}</dd>
+                    {% endif %}
+                </dl>
+            </aside>
+
+            <div class="detail-sections">
+                <section class="detail-panel detail-panel--wide">
+                    <h2>Descripción</h2>
+                    <p class="detail-description">{{ planta.descripcion or '—' }}</p>
+                </section>
+
+                {% if guia.pasos or guia.errores_comunes %}
+                <section class="detail-panel detail-panel--wide guide-section">
+                    <h2>Empezar hoy (paso a paso)</h2>
+                    <p class="hint">Guía orientativa para principiantes.</p>
+                    {% if guia.pasos %}
+                    <ol class="step-list">
+                        {% for paso in guia.pasos %}
+                        <li>
+                            <span class="step-num" aria-hidden="true">{{ loop.index }}</span>
+                            <span class="step-text">{{ paso }}</span>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                    {% endif %}
+                    {% if guia.errores_comunes %}
+                    <div class="guide-warnings">
+                        <h3 class="subsection">Errores comunes</h3>
+                        <ul class="warning-list">
+                            {% for error in guia.errores_comunes %}
+                            <li>
+                                <span class="warning-icon" aria-hidden="true">⚠️</span>
+                                <span>{{ error }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </section>
+                {% endif %}
+
+                {% if rasgos %}
+                <section class="detail-panel traits-section">
+                    <h2>Rasgos observados</h2>
+                    <p class="hint">Características visibles que apoyan la identificación.</p>
+                    <ul class="trait-list">
+                        {% for rasgo in rasgos %}
+                        <li>
+                            <span class="trait-icon" aria-hidden="true">🔍</span>
+                            <span>{{ rasgo }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+
+                {% if preguntas %}
+                <section class="detail-panel questions-section">
+                    <h2>Preguntas para mejorar la identificación</h2>
+                    <p class="hint">Responde en tu cuaderno o con nuevas fotos para afinar el resultado.</p>
+                    <ul class="question-list">
+                        {% for pregunta in preguntas %}
+                        <li>
+                            <span class="question-num" aria-hidden="true">{{ loop.index }}</span>
+                            <span>{{ pregunta }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+
+                {% if planta.candidatos_json and planta.candidatos_json != '[]' %}
+                <section class="detail-panel detail-panel--wide">
+                    <h2>Candidatos</h2>
+                    <div class="candidate-grid" data-candidates="{{ planta.candidatos_json | e }}"></div>
+                    <p class="hint">Las imágenes se obtienen automáticamente por nombre científico.</p>
+                </section>
+                {% endif %}
+
+                {% if planta.tamano_adulto or planta.crecimiento or planta.floracion or planta.epoca_poda or planta.epoca_trasplante %}
+                <section class="detail-panel">
+                    <h2>Características</h2>
+                    <dl class="care-list">
+                        {% if planta.tamano_adulto %}
+                        <dt>📏 Tamaño adulto</dt>
+                        <dd>{{ planta.tamano_adulto }}</dd>
+                        {% endif %}
+                        {% if planta.crecimiento %}
+                        <dt>🌱 Crecimiento</dt>
+                        <dd>{{ planta.crecimiento }}</dd>
+                        {% endif %}
+                        {% if planta.floracion %}
+                        <dt>🌸 Floración</dt>
+                        <dd>{{ planta.floracion }}</dd>
+                        {% endif %}
+                        {% if planta.epoca_poda %}
+                        <dt>✂️ Época de poda</dt>
+                        <dd>{{ planta.epoca_poda }}</dd>
+                        {% endif %}
+                        {% if planta.epoca_trasplante %}
+                        <dt>🪴 Época de trasplante</dt>
+                        <dd>{{ planta.epoca_trasplante }}</dd>
+                        {% endif %}
+                    </dl>
+                </section>
+                {% endif %}
+
+                {% if planta.senales_trasplante or planta.maceta_y_sustrato %}
+                <section class="detail-panel">
+                    <h2>Trasplante</h2>
+                    {% if planta.senales_trasplante %}
+                    <h3 class="subsection">Señales</h3>
+                    <p>{{ planta.senales_trasplante }}</p>
+                    {% endif %}
+                    {% if planta.maceta_y_sustrato %}
+                    <h3 class="subsection">Maceta y sustrato</h3>
+                    <p>{{ planta.maceta_y_sustrato }}</p>
+                    {% endif %}
+                </section>
+                {% endif %}
+
+                {% if planta.toxicidad_perros or planta.toxicidad_gatos %}
+                <section class="detail-panel toxicity">
+                    <h2>Toxicidad para mascotas</h2>
+                    <dl class="care-list">
+                        {% if planta.toxicidad_perros %}
+                        <dt>🐕 Perros</dt>
+                        <dd>{{ planta.toxicidad_perros }}</dd>
+                        {% endif %}
+                        {% if planta.toxicidad_gatos %}
+                        <dt>🐈 Gatos</dt>
+                        <dd>{{ planta.toxicidad_gatos }}</dd>
+                        {% endif %}
+                    </dl>
+                    <p class="hint">Información orientativa. Consulta a un veterinario ante cualquier ingesta sospechosa.</p>
+                </section>
+                {% endif %}
+
+                <section class="detail-panel detail-panel--wide detail-panel--care">
+                    <h2>Cuidados</h2>
+                    <div class="detail-care-grid">
+                        <div class="care-item">
+                            <span class="care-icon">💧</span>
+                            <h4>Riego</h4>
+                            <p>{{ planta.riego or '—' }}</p>
+                        </div>
+                        <div class="care-item">
+                            <span class="care-icon">☀️</span>
+                            <h4>Luz</h4>
+                            <p>{{ planta.luz or '—' }}</p>
+                        </div>
+                        <div class="care-item">
+                            <span class="care-icon">🌡️</span>
+                            <h4>Temperatura</h4>
+                            <p>{{ planta.temperatura or '—' }}</p>
+                        </div>
+                        <div class="care-item">
+                            <span class="care-icon">💨</span>
+                            <h4>Humedad</h4>
+                            <p>{{ planta.humedad or '—' }}</p>
+                        </div>
+                        <div class="care-item">
+                            <span class="care-icon">🪴</span>
+                            <h4>Suelo</h4>
+                            <p>{{ planta.suelo or '—' }}</p>
+                        </div>
+                        <div class="care-item">
+                            <span class="care-icon">🧪</span>
+                            <h4>Fertilización</h4>
+                            <p>{{ planta.fertilizacion or '—' }}</p>
+                        </div>
+                    </div>
+                </section>
+
+                {% if planta.plagas_habituales %}
+                <section class="detail-panel">
+                    <h2>Plagas habituales</h2>
+                    <p>{{ planta.plagas_habituales }}</p>
+                </section>
+                {% endif %}
+
+                {% if planta.problemas_comunes %}
+                <section class="detail-panel">
+                    <h2>Problemas comunes</h2>
+                    <p>{{ planta.problemas_comunes }}</p>
+                </section>
+                {% endif %}
+
+                <section class="detail-panel detail-panel--wide danger-zone">
+                    <h2>Eliminar</h2>
+                    <p>Esta acción eliminará la planta y su fotografía de forma permanente.</p>
+                    <form method="post" action="/plantas/{{ planta.id }}/eliminar"
+                          onsubmit="return confirm('Esta acción eliminará de forma permanente la planta, su fotografía y todo el cuaderno de observaciones. ¿Está seguro?');">
+                        <button type="submit" class="btn btn-danger">Eliminar planta</button>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </article>
+
+    <button type="button" class="scroll-top" id="scroll-top-btn" aria-label="Ir arriba" title="Ir arriba">
+        <span class="scroll-top-icon" aria-hidden="true">↑</span>
+        <span class="scroll-top-label">Ir arriba</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("scroll-top-btn");
+    if (!btn) return;
+
+    const toggle = () => {
+        btn.classList.toggle("is-visible", window.scrollY > 280);
+    };
+
+    toggle();
+    window.addEventListener("scroll", toggle, { passive: true });
+    btn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+});
+</script>
+{% endblock %}

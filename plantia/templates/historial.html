@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Mis plantas — PlantIA{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Mis plantas</h1>
+    <p>{{ total }} planta{{ 's' if total != 1 else '' }} identificada{{ 's' if total != 1 else '' }}</p>
+</section>
+
+{% if mensaje %}
+<div class="alert alert-success">{{ mensaje }}</div>
+{% endif %}
+
+<form class="search-bar" method="get" action="/plantas">
+    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, familia o tipo…">
+    <button type="submit" class="btn btn-primary">Buscar</button>
+    {% if q %}
+    <a href="/plantas" class="btn btn-outline">Limpiar</a>
+    {% endif %}
+</form>
+
+{% if plantas %}
+<div class="plant-grid">
+    {% for planta in plantas %}
+    <a href="/plantas/{{ planta.id }}" class="plant-card">
+        <img src="{{ image_url(planta.image_path) }}" alt="{{ planta.nombre_comun }}">
+        <div class="plant-card-body">
+            <h3>{{ planta.nombre_comun }}</h3>
+            <p class="scientific"><em>{{ planta.nombre_cientifico }}</em></p>
+            <div class="plant-card-meta">
+                <span class="badge badge-{{ planta.confianza }}">{{ planta.confianza }}</span>
+                <time>{{ planta.created_at.strftime('%d/%m/%Y') }}</time>
+            </div>
+            {% if planta.notas_usuario and planta.notas_usuario.strip() %}
+            {% set primera_nota = planta.notas_usuario.strip().split('\n') | first %}
+            <p class="plant-card-note" title="{{ planta.notas_usuario.strip() }}">
+                📝 {{ primera_nota[:72] }}{% if primera_nota|length > 72 %}…{% endif %}
+            </p>
+            {% else %}
+            <p class="plant-card-note plant-card-note--empty">Sin anotaciones aún</p>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% if total_pages > 1 %}
+<nav class="pagination">
+    {% if page > 1 %}
+    <a href="/plantas?q={{ q }}&page={{ page - 1 }}" class="btn btn-outline">← Anterior</a>
+    {% endif %}
+    <span class="page-info">Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="/plantas?q={{ q }}&page={{ page + 1 }}" class="btn btn-outline">Siguiente →</a>
+    {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <span class="empty-icon">🌱</span>
+    {% if q %}
+    <p>No se encontraron plantas para «{{ q }}».</p>
+    {% else %}
+    <p>Aún no has identificado ninguna planta.</p>
+    <a href="/" class="btn btn-primary">Identificar la primera</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -150,12 +150,39 @@ class PlantaService:
         with session_scope() as session:
             return session.get(Planta, planta_id)
 
+    # Órdenes admitidos para el listado de plantas.
+    ORDENES_VALIDOS = ("recientes", "antiguas", "nombre", "confianza")
+
+    @staticmethod
+    def _clausula_orden(orden: str):
+        from sqlalchemy import case
+
+        if orden == "antiguas":
+            return (Planta.created_at.asc(),)
+        if orden == "nombre":
+            return (func.lower(Planta.nombre_comun).asc(),)
+        if orden == "confianza":
+            # alto > medio > bajo, y a igualdad, más recientes primero.
+            prioridad = case(
+                (Planta.confianza == "alto", 0),
+                (Planta.confianza == "medio", 1),
+                (Planta.confianza == "bajo", 2),
+                else_=3,
+            )
+            return (prioridad.asc(), Planta.created_at.desc())
+        return (Planta.created_at.desc(),)
+
     @staticmethod
     def listar(
-        termino: str = "", page: int = 1, page_size: int = PAGE_SIZE
+        termino: str = "",
+        page: int = 1,
+        page_size: int = PAGE_SIZE,
+        orden: str = "recientes",
     ) -> PaginaPlantas:
         page = max(1, page)
         texto = termino.strip()
+        if orden not in PlantaService.ORDENES_VALIDOS:
+            orden = "recientes"
 
         with session_scope() as session:
             query = select(Planta)
@@ -176,7 +203,7 @@ class PlantaService:
             offset = (page - 1) * page_size
             items = list(
                 session.scalars(
-                    query.order_by(Planta.created_at.desc())
+                    query.order_by(*PlantaService._clausula_orden(orden))
                     .offset(offset)
                     .limit(page_size)
                 )

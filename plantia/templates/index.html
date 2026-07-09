@@ -29,6 +29,11 @@
         </div>
         <button type="submit" id="submit-btn" class="btn btn-primary" disabled>Identificar planta</button>
     </form>
+
+    <div id="identify-loading" class="identify-loading" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="identify-loading-text">Analizando tu planta con Gemini…</p>
+    </div>
 </div>
 
 {% if planta %}
@@ -48,7 +53,7 @@
 
     <div class="result-grid">
         <div class="result-image">
-            <img src="{{ image_url(planta.image_path) }}" alt="{{ planta.nombre_comun }}">
+            <img class="zoomable" src="{{ image_url(planta.image_path) }}" alt="{{ planta.nombre_comun }}">
         </div>
         <div class="result-info">
             <dl>
@@ -127,9 +132,7 @@
     <section class="candidate-section">
         <h3>Posibles candidatos</h3>
         <p class="hint">Si la identificación no es perfecta, estos candidatos pueden ayudarte a comparar.</p>
-        {% set candidatos = planta.candidatos_json | tojson %}
-        {# Nota: Jinja no parsea JSON nativo sin filtro; lo mostramos desde backend en ficha completa. #}
-        <p class="hint">Abre “Ver ficha completa” para ver los candidatos en tarjetas con imagen.</p>
+        <div class="candidate-grid" data-candidates="{{ planta.candidatos_json | e }}"></div>
     </section>
     {% endif %}
 </section>

@@ -1,4 +1,157 @@
-document.addEventListener("DOMContentLoaded", () => {
+/* ============================================================
+   PlantIA — interacciones de la interfaz
+   ============================================================ */
+
+/* ---------- Tema claro/oscuro ---------- */
+function initThemeToggle() {
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+
+    const applyTheme = (theme) => {
+        document.documentElement.setAttribute("data-theme", theme);
+        try {
+            localStorage.setItem("plantiaTheme", theme);
+        } catch (e) {
+            /* ignore */
+        }
+    };
+
+    btn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme") || "light";
+        applyTheme(current === "dark" ? "light" : "dark");
+    });
+}
+
+/* ---------- Menú móvil ---------- */
+function initMobileNav() {
+    const toggle = document.getElementById("nav-toggle");
+    const nav = document.getElementById("main-nav");
+    if (!toggle || !nav) return;
+
+    const close = () => {
+        nav.classList.remove("is-open");
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "Abrir menú");
+    };
+
+    toggle.addEventListener("click", () => {
+        const open = nav.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        toggle.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+    });
+
+    nav.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", close);
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") close();
+    });
+}
+
+/* ---------- Notificaciones toast ---------- */
+function showToast(message, type = "success", timeout = 4200) {
+    const root = document.getElementById("toast-root");
+    if (!root || !message) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast--${type}`;
+    toast.setAttribute("role", type === "error" ? "alert" : "status");
+
+    const icon = type === "error" ? "⚠️" : "✅";
+    toast.innerHTML = `
+        <span class="toast-icon" aria-hidden="true">${icon}</span>
+        <span class="toast-body"></span>
+        <button type="button" class="toast-close" aria-label="Cerrar">×</button>
+    `;
+    toast.querySelector(".toast-body").textContent = message;
+    root.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add("is-visible"));
+
+    const dismiss = () => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => toast.remove(), 400);
+    };
+
+    toast.querySelector(".toast-close").addEventListener("click", dismiss);
+    if (timeout) window.setTimeout(dismiss, timeout);
+}
+window.showToast = showToast;
+
+function initFlashToast() {
+    const flash = document.body.getAttribute("data-flash");
+    if (!flash) return;
+    const type = document.body.getAttribute("data-flash-type") || "success";
+    showToast(flash, type);
+    // Ocultar la alerta en línea equivalente (respaldo sin JS)
+    document.querySelectorAll(".alert").forEach((el) => el.classList.add("hidden"));
+}
+
+/* ---------- Lightbox (zoom de foto) ---------- */
+function initLightbox() {
+    const zoomables = document.querySelectorAll(".zoomable");
+    if (zoomables.length === 0) return;
+
+    let overlay = document.getElementById("lightbox");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "lightbox";
+        overlay.className = "lightbox";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.setAttribute("aria-label", "Imagen ampliada");
+        overlay.innerHTML = `
+            <button type="button" class="lightbox-close" aria-label="Cerrar">×</button>
+            <img alt="Imagen ampliada">
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    const img = overlay.querySelector("img");
+    let lastFocus = null;
+
+    const open = (src, alt) => {
+        img.src = src;
+        img.alt = alt || "Imagen ampliada";
+        lastFocus = document.activeElement;
+        overlay.classList.add("is-open");
+        overlay.querySelector(".lightbox-close").focus();
+    };
+
+    const close = () => {
+        overlay.classList.remove("is-open");
+        img.src = "";
+        if (lastFocus && lastFocus.focus) lastFocus.focus();
+    };
+
+    zoomables.forEach((el) => {
+        el.addEventListener("click", () => open(el.getAttribute("src"), el.getAttribute("alt")));
+    });
+
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay || e.target.classList.contains("lightbox-close")) close();
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && overlay.classList.contains("is-open")) close();
+    });
+}
+
+/* ---------- Micro-animaciones de aparición ---------- */
+function initReveal() {
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.querySelectorAll(".result-card, .detail-card").forEach((el) => {
+        el.classList.add("animate-in");
+    });
+    if (reduce) return;
+    document.querySelectorAll(".plant-grid .plant-card").forEach((el, i) => {
+        el.style.animationDelay = `${Math.min(i * 45, 360)}ms`;
+        el.classList.add("animate-in");
+    });
+}
+
+/* ---------- Splash ---------- */
+function initSplash() {
     const splash = document.getElementById("splash");
     const shouldShowSplash = document.documentElement.classList.contains("show-splash");
     if (splash && shouldShowSplash) {
@@ -22,19 +175,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         window.setTimeout(() => {
             splash.classList.add("splash-hide");
-            window.setTimeout(() => {
-                splash.remove();
-            }, 400);
+            window.setTimeout(() => splash.remove(), 400);
         }, durationMs);
         try {
             sessionStorage.setItem("plantiaSplashShown", "1");
         } catch (e) {
-            // ignore
+            /* ignore */
         }
     } else if (splash) {
         splash.remove();
     }
+}
 
+/* ---------- Subida de imagen ---------- */
+function initUploadForm() {
     const form = document.getElementById("upload-form");
     if (!form) return;
 
@@ -44,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const preview = document.getElementById("preview");
     const submitBtn = document.getElementById("submit-btn");
     const dropContent = dropZone.querySelector(".drop-zone-content");
+    const loading = document.getElementById("identify-loading");
 
     function showPreview(file) {
         const reader = new FileReader();
@@ -59,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function handleFile(file) {
         if (!file || !file.type.startsWith("image/")) {
-            alert("Selecciona un archivo de imagen válido (JPEG, PNG o WebP).");
+            showToast("Selecciona un archivo de imagen válido (JPEG, PNG o WebP).", "error");
             return;
         }
         const dt = new DataTransfer();
@@ -99,12 +254,13 @@ document.addEventListener("DOMContentLoaded", () => {
         submitBtn.disabled = true;
         submitBtn.textContent = "Identificando…";
         form.classList.add("loading");
+        if (loading) loading.classList.add("is-active");
     });
-});
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-    const grids = document.querySelectorAll(".candidate-grid");
-    grids.forEach((grid) => {
+/* ---------- Candidatos ---------- */
+function renderCandidates() {
+    document.querySelectorAll(".candidate-grid").forEach((grid) => {
         const raw = grid.getAttribute("data-candidates") || "[]";
         let candidates = [];
         try {
@@ -114,48 +270,52 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (!Array.isArray(candidates) || candidates.length === 0) return;
 
+        const escapeHtml = (s) =>
+            String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
         grid.innerHTML = candidates
             .map((c) => {
-                const name = c.nombre_comun || c.nombre_cientifico || "Candidato";
-                const sci = c.nombre_cientifico || "";
-                const reason = c.razon || "";
-                const conf = c.confianza || "medio";
+                const name = escapeHtml(c.nombre_comun || c.nombre_cientifico || "Candidato");
+                const sci = escapeHtml(c.nombre_cientifico || "");
+                const reason = escapeHtml(c.razon || "");
+                const conf = escapeHtml(c.confianza || "medio");
                 const img = c.thumbnail_url || "";
                 const imgTag = img
-                    ? `<img class="candidate-thumb" src="${img}" alt="${sci}">`
+                    ? `<img class="candidate-thumb" src="${encodeURI(img)}" alt="${sci}">`
                     : `<div class="candidate-thumb candidate-thumb-placeholder" aria-hidden="true">🌿</div>`;
 
-                // Wikipedia en inglés. Usamos el nombre científico como título del artículo.
-                const wikiUrl = sci
+                const wikiUrl = c.nombre_cientifico
                     ? `https://en.wikipedia.org/wiki/${encodeURIComponent(
-                          sci.trim().replace(/\s+/g, "_")
+                          c.nombre_cientifico.trim().replace(/\s+/g, "_")
                       )}`
                     : "";
-                const wikiLinkOpen = wikiUrl
+                const wikiOpen = wikiUrl
                     ? `<a class="candidate-wiki-link" href="${wikiUrl}" target="_blank" rel="noreferrer noopener">`
                     : "";
-                const wikiLinkClose = wikiUrl ? `</a>` : "";
+                const wikiClose = wikiUrl ? "</a>" : "";
+                const wikiRow = wikiUrl
+                    ? `<a class="candidate-wiki-badge" href="${wikiUrl}" target="_blank" rel="noreferrer noopener">Ver en Wikipedia ↗</a>`
+                    : "";
 
                 return `
                 <div class="candidate-card">
                     ${imgTag}
                     <div class="candidate-body">
-                        <div class="candidate-title">
-                            ${wikiLinkOpen}${name}${wikiLinkClose}
-                        </div>
-                        ${sci ? `<div class="candidate-sci"><em>${wikiLinkOpen}${sci}${wikiLinkClose}</em></div>` : ""}
+                        <div class="candidate-title">${wikiOpen}${name}${wikiClose}</div>
+                        ${sci ? `<div class="candidate-sci"><em>${wikiOpen}${sci}${wikiClose}</em></div>` : ""}
                         <div class="candidate-meta">
                             <span class="badge badge-${conf}">${conf}</span>
                         </div>
                         ${reason ? `<div class="candidate-reason">${reason}</div>` : ""}
+                        ${wikiRow}
                     </div>
-                </div>
-                `;
+                </div>`;
             })
             .join("");
     });
-});
+}
 
+/* ---------- Cuaderno ---------- */
 function formatJournalDate() {
     const now = new Date();
     const day = now.getDate();
@@ -188,4 +348,41 @@ function initJournalSections() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", initJournalSections);
+/* ---------- Mostrar/ocultar API key ---------- */
+function initRevealInputs() {
+    document.querySelectorAll("[data-reveal-target]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const target = document.getElementById(btn.getAttribute("data-reveal-target"));
+            if (!target) return;
+            const show = target.type === "password";
+            target.type = show ? "text" : "password";
+            btn.textContent = show ? "🙈" : "👁️";
+            btn.setAttribute("aria-label", show ? "Ocultar" : "Mostrar");
+        });
+    });
+}
+
+/* ---------- Scroll to top (ficha) ---------- */
+function initScrollTop() {
+    const btn = document.getElementById("scroll-top-btn");
+    if (!btn) return;
+    const toggle = () => btn.classList.toggle("is-visible", window.scrollY > 280);
+    toggle();
+    window.addEventListener("scroll", toggle, { passive: true });
+    btn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+}
+
+/* ---------- Init ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+    initSplash();
+    initThemeToggle();
+    initMobileNav();
+    initFlashToast();
+    renderCandidates();
+    initLightbox();
+    initReveal();
+    initUploadForm();
+    initJournalSections();
+    initRevealInputs();
+    initScrollTop();
+});

@@ -25,7 +25,7 @@ from plantia.database import init_database
 from plantia.schemas.planta import PlantaListResponse, PlantaResponse, PlantaUpdate
 from plantia.services.gemini_service import GeminiService
 from plantia.services.planta_service import PlantaService
-from plantia.utils.jinja_filters import detalle_json_fields, from_json
+from plantia.utils.jinja_filters import detalle_json_fields
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = PACKAGE_DIR / "templates"
@@ -34,8 +34,6 @@ STATIC_DIR = PACKAGE_DIR / "static"
 router = APIRouter()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.globals["image_url"] = lambda path: f"/uploads/{Path(path).name}"
-templates.env.filters["json"] = lambda s: s  # backward-safe no-op
-templates.env.filters["from_json"] = from_json
 
 
 def _contexto_detalle(planta, *, mensaje: str | None, focus_cuaderno: bool, luna) -> dict:
@@ -44,12 +42,8 @@ def _contexto_detalle(planta, *, mensaje: str | None, focus_cuaderno: bool, luna
         "mensaje": mensaje,
         "focus_cuaderno": focus_cuaderno,
         "luna": luna,
-        **_detalle_json_fields(planta),
+        **detalle_json_fields(planta),
     }
-
-
-def _detalle_json_fields(planta) -> dict:
-    return detalle_json_fields(planta)
 
 
 def _planta_to_response(planta) -> PlantaResponse:
@@ -198,15 +192,19 @@ async def pagina_historial(
     request: Request,
     q: str = Query("", alias="q"),
     page: int = Query(1, ge=1),
+    orden: str = Query("recientes", alias="orden"),
     mensaje: str = Query("", alias="mensaje"),
 ):
-    pagina = PlantaService.listar(termino=q, page=page)
+    pagina = PlantaService.listar(termino=q, page=page, orden=orden)
+    if orden not in PlantaService.ORDENES_VALIDOS:
+        orden = "recientes"
     return templates.TemplateResponse(
         request,
         "historial.html",
         {
             "plantas": pagina.items,
             "q": q,
+            "orden": orden,
             "page": pagina.page,
             "total": pagina.total,
             "total_pages": pagina.total_pages,
@@ -346,10 +344,5 @@ def create_app():
     app.include_router(router)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
     app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
-
-    @app.on_event("startup")
-    async def startup():
-        ensure_directories()
-        init_database()
 
     return app

@@ -12,13 +12,28 @@
 <div class="alert alert-success">{{ mensaje }}</div>
 {% endif %}
 
-<form class="search-bar" method="get" action="/plantas">
-    <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, familia o tipo…">
-    <button type="submit" class="btn btn-primary">Buscar</button>
-    {% if q %}
-    <a href="/plantas" class="btn btn-outline">Limpiar</a>
-    {% endif %}
-</form>
+<div class="plants-toolbar">
+    <form class="search-bar" method="get" action="/plantas">
+        <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, familia o tipo…">
+        <input type="hidden" name="orden" value="{{ orden }}">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        {% if q %}
+        <a href="/plantas?orden={{ orden }}" class="btn btn-outline">Limpiar</a>
+        {% endif %}
+    </form>
+
+    <form class="sort-control" method="get" action="/plantas">
+        <input type="hidden" name="q" value="{{ q }}">
+        <label for="orden">Ordenar por</label>
+        <select id="orden" name="orden" class="sort-select" onchange="this.form.submit()">
+            <option value="recientes"{% if orden == 'recientes' %} selected{% endif %}>Más recientes</option>
+            <option value="antiguas"{% if orden == 'antiguas' %} selected{% endif %}>Más antiguas</option>
+            <option value="nombre"{% if orden == 'nombre' %} selected{% endif %}>Nombre (A-Z)</option>
+            <option value="confianza"{% if orden == 'confianza' %} selected{% endif %}>Confianza</option>
+        </select>
+        <noscript><button type="submit" class="btn btn-outline">Aplicar</button></noscript>
+    </form>
+</div>
 
 {% if plantas %}
 <div class="plant-grid">
@@ -48,11 +63,11 @@
 {% if total_pages > 1 %}
 <nav class="pagination">
     {% if page > 1 %}
-    <a href="/plantas?q={{ q }}&page={{ page - 1 }}" class="btn btn-outline">← Anterior</a>
+    <a href="/plantas?q={{ q }}&orden={{ orden }}&page={{ page - 1 }}" class="btn btn-outline">← Anterior</a>
     {% endif %}
     <span class="page-info">Página {{ page }} de {{ total_pages }}</span>
     {% if page < total_pages %}
-    <a href="/plantas?q={{ q }}&page={{ page + 1 }}" class="btn btn-outline">Siguiente →</a>
+    <a href="/plantas?q={{ q }}&orden={{ orden }}&page={{ page + 1 }}" class="btn btn-outline">Siguiente →</a>
     {% endif %}
 </nav>
 {% endif %}

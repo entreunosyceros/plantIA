@@ -4,9 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PlantIA{% endblock %}</title>
+    <link rel="icon" href="/static/img/logo.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <script>
         (function () {
+            // Tema: aplicar antes de pintar para evitar parpadeo.
+            try {
+                var stored = localStorage.getItem("plantiaTheme");
+                var theme = stored;
+                if (!theme) {
+                    theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+                        ? "dark"
+                        : "light";
+                }
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+            // Splash: mostrar solo en primera carga o al volver a Identificar.
             try {
                 var shown = sessionStorage.getItem("plantiaSplashShown") === "1";
                 var shouldShow = !shown || window.location.pathname === "/";
@@ -19,7 +37,7 @@
         })();
     </script>
 </head>
-<body>
+<body{% if mensaje %} data-flash="{{ mensaje }}" data-flash-type="success"{% elif error %} data-flash="{{ error }}" data-flash-type="error"{% endif %}>
     <div id="splash" class="splash" aria-hidden="true">
         <div class="splash-inner">
             <img class="splash-logo" src="/static/img/logo.png" alt="PlantIA">
@@ -28,17 +46,29 @@
             </div>
         </div>
     </div>
+
     <header class="header">
         <div class="container header-inner">
             <a href="/" class="logo">
                 <img class="logo-img" src="/static/img/logo.png" alt="PlantIA">
                 <span class="logo-text">PlantIA</span>
             </a>
-            <nav>
+
+            <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="main-nav">
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+                <span class="nav-toggle-bar"></span>
+            </button>
+
+            <nav id="main-nav">
                 <a href="/" class="nav-link{% if request.url.path == '/' %} active{% endif %}">Identificar</a>
                 <a href="/plantas" class="nav-link{% if request.url.path.startswith('/plantas') %} active{% endif %}">Mis plantas</a>
                 <a href="/configuracion" class="nav-link{% if request.url.path.startswith('/configuracion') %} active{% endif %}">Configuración</a>
-                <form method="post" action="/salir" style="margin: 0;">
+                <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema" title="Cambiar tema claro/oscuro">
+                    <span class="theme-toggle-icon theme-toggle-icon--sun" aria-hidden="true">☀️</span>
+                    <span class="theme-toggle-icon theme-toggle-icon--moon" aria-hidden="true">🌙</span>
+                </button>
+                <form method="post" action="/salir" class="nav-exit-form">
                     <button
                         type="submit"
                         class="btn btn-danger nav-exit"
@@ -58,6 +88,8 @@
             <p>PlantIA — identificación de plantas con Gemini. Los resultados son orientativos.</p>
         </div>
     </footer>
+
+    <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="false"></div>
 
     <script src="/static/js/app.js"></script>
     {% block scripts %}{% endblock %}

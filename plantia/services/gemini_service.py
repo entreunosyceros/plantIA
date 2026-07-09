@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from io import BytesIO
 
 from google import genai
@@ -99,6 +100,20 @@ class GeminiService:
     """Identifica plantas a partir de imágenes usando Gemini."""
 
     @staticmethod
+    def _is_transient(exc: Exception) -> bool:
+        """Errores temporales del lado de Google que conviene reintentar."""
+        raw = str(exc)
+        upper = raw.upper()
+        return (
+            "UNAVAILABLE" in upper
+            or "OVERLOADED" in upper
+            or "503" in raw
+            or "RESOURCE_EXHAUSTED" in upper
+            or " 429" in raw
+            or "CODE': 429" in upper
+        )
+
+    @staticmethod
     def _friendly_error(exc: Exception) -> str:
         raw = str(exc)
         upper = raw.upper()
@@ -117,6 +132,13 @@ class GeminiService:
             return (
                 "Gemini rechazó la petición por límite de cuota (429 RESOURCE_EXHAUSTED)"
                 f"{extra}. Revisa tu plan/cuotas en Google AI Studio y prueba de nuevo."
+            )
+
+        if "UNAVAILABLE" in upper or "OVERLOADED" in upper or "503" in raw:
+            return (
+                "El modelo de Gemini está sobrecargado en este momento (503 UNAVAILABLE). "
+                "Es un problema temporal de Google: espera unos segundos y vuelve a intentarlo. "
+                "Si persiste, prueba con otro modelo en Configuración."
             )
 
         return raw
@@ -194,8 +216,9 @@ class GeminiService:
             data=prepared_bytes, mime_type=prepared_mime
         )
 
+        max_attempts = 4
         last_error: Exception | None = None
-        for attempt in range(2):
+        for attempt in range(max_attempts):
             try:
                 response = client.models.generate_content(
                     model=get_gemini_model(),
@@ -211,7 +234,10 @@ class GeminiService:
                 return GeminiService._parse_json_response(text)
             except Exception as exc:
                 last_error = exc
-                if attempt == 0:
+                es_ultimo = attempt == max_attempts - 1
+                # Solo reintentamos errores temporales (503 sobrecarga, 429, red).
+                if not es_ultimo and GeminiService._is_transient(exc):
+                    time.sleep(1.5 * (2**attempt))  # 1.5s, 3s, 6s
                     continue
                 raise ValueError(
                     f"Error al identificar la planta: {GeminiService._friendly_error(exc)}"

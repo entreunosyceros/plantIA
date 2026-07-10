@@ -300,8 +300,9 @@ async def api_listar(
     q: str = Query("", alias="q"),
     page: int = Query(1, ge=1),
     page_size: int = Query(PAGE_SIZE, ge=1, le=100),
+    orden: str = Query("recientes", alias="orden"),
 ):
-    pagina = PlantaService.listar(termino=q, page=page, page_size=page_size)
+    pagina = PlantaService.listar(termino=q, page=page, page_size=page_size, orden=orden)
     return _pagina_lista(pagina, q)
 
 
@@ -315,6 +316,17 @@ async def api_detalle(planta_id: int):
 
 @router.patch("/api/plantas/{planta_id}", response_model=PlantaResponse)
 async def api_actualizar(planta_id: int, datos: PlantaUpdate):
+    if datos.notas_usuario is None:
+        raise HTTPException(status_code=400, detail="No hay campos para actualizar.")
+    planta = PlantaService.actualizar_notas(planta_id, datos.notas_usuario)
+    if planta is None:
+        raise HTTPException(status_code=404, detail="Planta no encontrada.")
+    return _planta_to_response(planta)
+
+
+@router.post("/api/plantas/{planta_id}/notas", response_model=PlantaResponse)
+async def api_guardar_notas(planta_id: int, datos: PlantaUpdate):
+    """Guardar notas del cuaderno (alternativa POST para clientes móviles)."""
     if datos.notas_usuario is None:
         raise HTTPException(status_code=400, detail="No hay campos para actualizar.")
     planta = PlantaService.actualizar_notas(planta_id, datos.notas_usuario)

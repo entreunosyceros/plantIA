@@ -17,6 +17,7 @@ PlantIA está pensada para identificar y cuidar plantas de la forma más sencill
 - Cuaderno de observaciones por planta (anotaciones personales tras cada identificación)
 - Calendario lunar en la ficha de cada planta
 - API REST para integraciones futuras
+- App Android en LAN (CameraX + API REST): identificación, cuaderno, recordatorios y más — ver [android/README.md](android/README.md)
 
 ## Qué información obtiene de cada imagen
 
@@ -194,9 +195,10 @@ cp -r ~/.plantia ~/backup-plantia-$(date +%Y%m%d)
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `POST` | `/api/plantas/identificar` | Sube imagen, identifica y guarda |
-| `GET` | `/api/plantas?q=` | Listado con búsqueda |
+| `GET` | `/api/plantas?q=&page=&page_size=&orden=` | Listado con búsqueda y orden (`recientes`, `antiguas`, `nombre`, `confianza`) |
 | `GET` | `/api/plantas/{id}` | Detalle de una planta |
 | `PATCH` | `/api/plantas/{id}` | Actualizar notas (`{"notas_usuario": "..."}`) |
+| `POST` | `/api/plantas/{id}/notas` | Guardar notas del cuaderno (mismo cuerpo JSON; útil para la app Android) |
 | `DELETE` | `/api/plantas/{id}` | Eliminar planta |
 
 Ejemplo con `curl`:
@@ -204,6 +206,27 @@ Ejemplo con `curl`:
 ```bash
 curl -X POST http://localhost:8000/api/plantas/identificar \
   -F "file=@mi-planta.jpg"
+```
+
+## App Android
+
+Cliente móvil en Kotlin + Jetpack Compose para usar PlantIA en la red local. Documentación completa en [android/README.md](android/README.md).
+
+| Función | Descripción |
+|---------|-------------|
+| Identificar | Cámara CameraX o **elegir de galería** |
+| Re-identificar | Nueva foto para afinar una planta ya guardada |
+| Mis plantas | Grid con búsqueda, orden, paginación y **swipe «Regada hoy»** |
+| Ficha completa | Cuidados, calendario lunar, toxicidad, plagas, mantenimiento, candidatos |
+| Cuaderno | Timeline, chips rápidos y sincronización con el servidor |
+| Recordatorios | Riego cada 1–14 días con **hora del aviso** y panel «regar hoy» |
+| Ajustes | URL del servidor, **tema claro/oscuro/sistema** y pantalla Acerca de |
+
+Compilación:
+
+```bash
+cd android/PlantIAAndroid
+./gradlew assembleDebug
 ```
 
 ## Arranque manual (con venv activo)

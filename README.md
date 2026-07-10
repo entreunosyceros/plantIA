@@ -27,6 +27,13 @@ Cada planta queda registrada en tu colección personal junto con su fotografía,
 
 ### Identificación básica
 
+<p align="center">
+
+  <img width="1066" height="653" alt="identificar" src="https://github.com/user-attachments/assets/60572b57-7eed-4138-b129-c3c4acee0f5b" />
+
+</p>
+
+
 | Campo | Descripción |
 |-------|-------------|
 | Nombre común | Nombre popular de la planta en español |
@@ -37,6 +44,10 @@ Cada planta queda registrada en tu colección personal junto con su fotografía,
 | Confianza | Nivel estimado de certeza: `alto`, `medio` o `bajo` |
 
 ### Taxonomía y ayuda a la identificación
+
+<p align="center">
+<img width="964" height="629" alt="listado" src="https://github.com/user-attachments/assets/68b0dc4e-23ea-4ecd-af3d-a8653ccda77d" />
+</p>
 
 Cuando la identificación no es totalmente segura, PlantIA aporta contexto adicional:
 
@@ -91,6 +102,12 @@ Los candidatos se muestran como **tarjetas con imagen** en la ficha completa de 
 | Toxicidad gatos | Nivel de toxicidad y síntomas posibles |
 
 ### Datos adicionales en la interfaz
+
+<p align="center">
+
+  <img width="1070" height="1830" alt="ficha" src="https://github.com/user-attachments/assets/e123feba-21df-483b-bcf5-e08b40a07766" />
+
+</p>
 
 | Elemento | Descripción |
 |----------|-------------|
@@ -161,6 +178,12 @@ Variables en `.env`:
 
 ### Configurar desde la interfaz
 
+<p align="center">
+
+  <img width="990" height="541" alt="configuracion" src="https://github.com/user-attachments/assets/136c48aa-1c32-4403-a3be-31bb8949dfc0" />
+
+</p>
+
 También puedes configurar Gemini desde la propia aplicación:
 
 - Abre PlantIA y entra en **Configuración**
@@ -209,6 +232,12 @@ curl -X POST http://localhost:8000/api/plantas/identificar \
 ```
 
 ## App Android
+
+<p align="center">
+
+  <img width="1080" height="2392" alt="Screenshot_2026-07-10-20-44-44-728_com plantia" src="https://github.com/user-attachments/assets/5ec7b49a-6c4d-4b50-b5c8-377a496060e7" />
+
+</p>
 
 Cliente móvil en Kotlin + Jetpack Compose para usar PlantIA en la red local. Documentación completa en [android/README.md](android/README.md).
 
